@@ -164,7 +164,8 @@ isLost = False
 round_counter = 0
 nullifiedMissiles = []
 game_timer = 0;
-EnemiesOnTheScreen = 0
+EnemiesPast = 0
+EnemiesNow = 0
 # variables
 
 game_active = False
@@ -317,7 +318,9 @@ while True:
                 if(missileTimer % missileSpawn == 0 and missileAirborne == False):
                     locationOfEnemies = level_1_enemies[:]
                     currentPlayerLocation = [player_rectangle[0],player_rectangle[1]]
-                    missileAirborne = True       
+                    missileAirborne = True  
+                    if(len(level_1_enemies) != 0):
+                        EnemiesNow = len(level_1_enemies)/2 
                     
                 
                 try:
@@ -328,6 +331,7 @@ while True:
                     1    
 
                 enemies +=1
+                
                 
             if(len(locationOfEnemies) == 0 and len(nullifiedMissiles) == 0 and len(level_1_enemies) == 0):
                 missileAirborne = False
@@ -352,8 +356,8 @@ while True:
                         else: screen.blit(missile, missile_rect)
                     else:
                         nullifiedMissiles.append(enemy)
-
-            if(len(nullifiedMissiles) == round_counter):
+                        
+            if(len(nullifiedMissiles) == EnemiesNow):
                 if len(level_1_enemies) == 0:
                     level1 = False
                     inLevel1 = 0
