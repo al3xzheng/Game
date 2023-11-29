@@ -159,12 +159,10 @@ original_pos = [0,0]
 missileTimer = 0
 locationOfEnemies = []
 missileAirborne = False
-missileSpawn = 50
+missileSpawnRate = 50
 isLost = False
 round_counter = 0
 nullifiedMissiles = []
-game_timer = 0;
-EnemiesPast = 0
 EnemiesNow = 0
 # variables
 
@@ -209,7 +207,7 @@ while True:
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
                     game_active = False
-        if game_timer % 50 == 0 and level1 == False:
+        if level1 == False:
             if(hearts <= 0):
                 round_counter -=1
             round_counter += 1
@@ -315,7 +313,7 @@ while True:
                 except:
                     1
                 
-                if(missileTimer % missileSpawn == 0 and missileAirborne == False):
+                if(missileTimer % missileSpawnRate == 0 and missileAirborne == False):
                     locationOfEnemies = level_1_enemies[:]
                     currentPlayerLocation = [player_rectangle[0],player_rectangle[1]]
                     missileAirborne = True  
@@ -346,7 +344,7 @@ while True:
                     missile_direction_x = missile_data[1] *2
                     missile_direction_y = missile_data[2] *2
                     missile_ref_angle = missile_data[3]
-                    missile_rect = missile.get_rect(center = (locationOfEnemies[enemy] + (missileTimer-missileSpawn)*1.3*missile_direction_x, locationOfEnemies[enemy+1]+ (missileTimer-missileSpawn)*1.3*missile_direction_y))
+                    missile_rect = missile.get_rect(center = (locationOfEnemies[enemy] + (missileTimer-missileSpawnRate)*1.3*missile_direction_x, locationOfEnemies[enemy+1]+ (missileTimer-missileSpawnRate)*1.3*missile_direction_y))
                     if(enemy in nullifiedMissiles): None
                     elif(0<missile_rect.x and missile_rect.x <800 and 0<missile_rect.y and missile_rect.y<600):
                         if(missile_rect.colliderect(player_rectangle)):
