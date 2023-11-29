@@ -164,6 +164,7 @@ isLost = False
 round_counter = 0
 nullifiedMissiles = []
 game_timer = 0;
+EnemiesOnTheScreen = 0
 # variables
 
 game_active = False
@@ -316,7 +317,8 @@ while True:
                 if(missileTimer % missileSpawn == 0 and missileAirborne == False):
                     locationOfEnemies = level_1_enemies[:]
                     currentPlayerLocation = [player_rectangle[0],player_rectangle[1]]
-                    missileAirborne = True
+                    missileAirborne = True       
+                    
                 
                 try:
                     level_1_enemies[2*enemies] += 2 * tracker[2]
@@ -325,9 +327,15 @@ while True:
                 except:
                     1    
 
-                enemies +=1                
+                enemies +=1
                 
-            if(level1 == True):  
+            if(len(locationOfEnemies) == 0 and len(nullifiedMissiles) == 0 and len(level_1_enemies) == 0):
+                missileAirborne = False
+                missileTimer = 0
+                level1 = False
+                inLevel1 = 0                        
+                
+            if(level1):
                 for enemy in range(0,len(locationOfEnemies),2):
                     missile_data = enemy_fire(locationOfEnemies[enemy],locationOfEnemies[enemy+1],currentPlayerLocation[0],currentPlayerLocation[1])
                     missile = missile_data[0]
@@ -345,21 +353,15 @@ while True:
                     else:
                         nullifiedMissiles.append(enemy)
 
-            if(len(nullifiedMissiles) == (round_counter)):
-                        if len(level_1_enemies) == 0:
-                            level1 = False
-                            inLevel1 = 0
-                        locationOfEnemies = []
-                        missileAirborne = False
-                        nullifiedMissiles = []
-                        missileTimer = 0
-            
-
-                # level1 = False
-                # inLevel1 = 0
-                # locationOfEnemies = []
-                # nullifiedMissiles = []
-                # missileTimer = 0
+            if(len(nullifiedMissiles) == round_counter):
+                if len(level_1_enemies) == 0:
+                    level1 = False
+                    inLevel1 = 0
+                locationOfEnemies = []
+                missileAirborne = False
+                nullifiedMissiles = []
+                missileTimer = 0
+                numberEnemiesOnScreen = 0
 
         pygame.display.update() 
         #displays surface that we blit
@@ -390,4 +392,3 @@ while True:
                     rules()
                 
         pygame.display.update()
-
