@@ -22,8 +22,44 @@ clock = pygame.time.Clock()
 
 main_font = pygame.font.Font("Pixeltype.ttf", 50)
 
+round_counter = 0  # Initialize the round counter
+
 player_surface = pygame.transform.scale_by(pygame.image.load("player_pos1.png").convert_alpha(),2)
 player_rectangle = player_surface.get_rect(center = (400,300))
+player_running =[pygame.image.load("player_pos1.png"),
+				pygame.image.load("player_pos2.png"),
+				pygame.image.load("player_pos3.png"),
+				pygame.image.load("player_pos4.png"),
+				pygame.image.load("player_pos5.png"),
+				pygame.image.load("player_pos6.png"),
+				pygame.image.load("player_pos7.png")]
+
+enemy_frame_size = (40, 40)  # Set the desired size for the enemy frames
+
+enemy_frames = [pygame.transform.scale(pygame.image.load("Slime1.png"), enemy_frame_size),
+                pygame.transform.scale(pygame.image.load("Slime2.png"), enemy_frame_size),
+                pygame.transform.scale(pygame.image.load("Slime3.png"), enemy_frame_size),
+                pygame.transform.scale(pygame.image.load("Slime4.png"), enemy_frame_size),
+                pygame.transform.scale(pygame.image.load("Slime5.png"), enemy_frame_size)]
+
+projectle_frame_size = (20, 20)
+
+projectle_frames = [pygame.transform.scale(pygame.image.load("Projectle_1.png"), projectle_frame_size),
+                    pygame.transform.scale(pygame.image.load("Projectle_2.png"), projectle_frame_size),
+                    pygame.transform.scale(pygame.image.load("Projectle_3.png"), projectle_frame_size),
+                    pygame.transform.scale(pygame.image.load("Projectle_4.png"), projectle_frame_size)]
+
+projectle_animation_frame = 0
+projectle_animation_speed = 0.1  # Adjust this to change the speed of the projectle animation
+last_projectle_animation_update = pygame.time.get_ticks()
+
+enemy_animation_frame = 0
+last_enemy_animation_update = pygame.time.get_ticks()
+enemy_animation_speed = 0.1
+
+current_frame = 0
+animation_speed = 0.1  # Adjust this to change the speed of the animation
+last_update = pygame.time.get_ticks()
 
 spear = pygame.transform.scale_by(pygame.image.load("spear.png").convert_alpha(),1)
 
@@ -31,8 +67,8 @@ hearts = 3
 heart_surface = pygame.transform.scale_by(pygame.image.load("heart.png").convert_alpha(), 0.1)
 
 def enemy_goon(enemy_x,enemy_y,collided = False):
-    enemy_surface = pygame.Surface((25,25)) #The size of the enemy
-    enemy_surface.fill('Red') #The colour of the enemy
+    global enemy_animation_frame
+    enemy_surface = enemy_frames[enemy_animation_frame]  # Use the current frame
     enemy_rect = enemy_surface.get_rect(center = (enemy_x,enemy_y)) #The position of the enemy, at the centre.
     pos_diff_x = player_rectangle[0] - enemy_rect[0]
     pos_diff_y = player_rectangle[1] - enemy_rect[1]
@@ -132,6 +168,11 @@ missile_surface = pygame.Surface((15,15)) #The size of the porjectile
 missile_surface.fill('Blue') #The colour of the projectile
 
 def enemy_fire(enemy_x,enemy_y, player_x, player_y):
+    global projectle_animation_frame, last_projectle_animation_update
+    now = pygame.time.get_ticks()
+    if now - last_projectle_animation_update > projectle_animation_speed * 1000:
+        last_projectle_animation_update = now
+        projectle_animation_frame = (projectle_animation_frame + 1) % len(projectle_frames)
     x_diff_missile = player_x - enemy_x
     y_diff_missile = player_y - enemy_y
     missile_norm = math.sqrt(x_diff_missile**2 + y_diff_missile**2)
@@ -144,8 +185,46 @@ def enemy_fire(enemy_x,enemy_y, player_x, player_y):
     elif (x_diff_missile < 0 and y_diff_missile > 0):
         missile_angle = -math.degrees(math.atan2(y_diff_missile,x_diff_missile)) -90
         reference_angle = "up"
-    rotated_missile = pygame.transform.rotate(missile_surface, missile_angle)
+    rotated_missile = pygame.transform.rotate(projectle_frames[projectle_animation_frame], missile_angle)
     return [rotated_missile,x_diff_missile/missile_norm, y_diff_missile/missile_norm, reference_angle]
+
+movement_speed = 5  # Default movement speed
+attack_speed = 1000  # Default attack speed in milliseconds
+last_attack_time = 0
+spear_speed = 10
+
+
+
+def offer_power_ups(round_counter):
+    global hearts, movement_speed, spear_speed
+    if round_counter % 3 == 0:
+        power_up_text = "Choose a Power-Up: 1 for Movement Speed, 2 for Extra Heart, 3 for Attack Speed"
+        characters_in_line = 40  # Number of characters in each line
+        lines = textwrap.wrap(power_up_text, width=characters_in_line)  # Wrap the text
+
+        line_number = 0
+        while line_number < len(lines):
+            display_text(lines[line_number], main_font, "Black", width / 2, (length / 2 - 200) + (line_number * 50))
+            line_number += 1
+
+        selected = False
+        while not selected:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    exit()
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_1:
+                        movement_speed += 0.3 # Increase movement speed
+                        selected = True
+                    elif event.key == pygame.K_2:
+                        hearts += 1  # Add an extra heart
+                        selected = True
+                    elif event.key == pygame.K_3:
+                        spear_speed += 3
+                        selected = True
+            pygame.display.update()
+
 
 x_diff = 0
 y_diff = 0
@@ -176,19 +255,27 @@ level1 = False
 
 while True:
 
+
     if game_active == True:
+        if level1 == False:
+            round_counter += 1  # Increment round counter
+            offer_power_ups(round_counter)  # Offer power-ups based on the round
+            level1 = True
+       
+    
+        now = pygame.time.get_ticks()
 
         screen.fill("Light Grey")
-
+            
         keys = pygame.key.get_pressed()
         if keys[pygame.K_w]:
-            player_rectangle.top -= 5
+            player_rectangle.top -= movement_speed
         if keys[pygame.K_a]:
-            player_rectangle.left -= 5
+            player_rectangle.left -= movement_speed
         if keys[pygame.K_d]:
-            player_rectangle.right += 5
+            player_rectangle.right += movement_speed
         if keys[pygame.K_s]:
-            player_rectangle.bottom += 5
+            player_rectangle.bottom += movement_speed
         # movement controls
 
         if player_rectangle.top <= 0:
@@ -199,6 +286,20 @@ while True:
             player_rectangle.right = width
         if player_rectangle.bottom >= length:
             player_rectangle.bottom = length
+            
+        if now - last_update > animation_speed * 1000:
+            last_update = now
+            current_frame = (current_frame + 1) % len(player_running)
+            if keys[pygame.K_a] or keys[pygame.K_d] or keys[pygame.K_s] or keys[pygame.K_w]:
+                player_surface = pygame.transform.scale(player_running[current_frame], (40, 40))
+            else:
+                # Reset to default image when not moving
+                player_surface = pygame.transform.scale(pygame.image.load("player_pos1.png"), (40, 40))
+        if now - last_enemy_animation_update > enemy_animation_speed * 1000:
+            last_enemy_animation_update = now
+            enemy_animation_frame = (enemy_animation_frame + 1) % len(enemy_frames)
+
+        pygame.draw.rect(screen, (255, 0, 0), player_rectangle, 2)
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -230,7 +331,7 @@ while True:
             
         if(hearts <= 0):
             screen.fill("Light Blue")
-            lose_text = "GG you lost and completed " + str(round_counter-1) + " rounds of the game"
+            lose_text = "You Lost! " + str(round_counter-1) + " Waves Completed!"
             lose_surf = main_font.render(f'{lose_text}',False,"Black")
             lose_rect = lose_surf.get_rect(center = (width/2,length/2))
             screen.blit(lose_surf, lose_rect)
@@ -265,8 +366,8 @@ while True:
         if airborne == True:
             if location[0] >= 0 and location[0] <= width:
                 if location[1] >= 0 and location[1] <= length:
-                    location[0] += 10 * unit_x
-                    location[1] -= 10 * unit_y
+                    location[0] += spear_speed * unit_x
+                    location[1] -= spear_speed * unit_y
                     screen.blit(rotated_spear, ((spear_rect[0] + 50*unit_x),(spear_rect[1] - 50*unit_y)))
                     # creates an offset from the center of the player
                 # if the spear is within 300 pixels of the player, it will move towards the clicked location
@@ -364,6 +465,9 @@ while True:
                 nullifiedMissiles = []
                 missileTimer = 0
                 numberEnemiesOnScreen = 0
+            
+        display_text(f"Wave: {round_counter}", main_font, "Black", width - 100, 50)
+
 
         pygame.display.update() 
         #displays surface that we blit
