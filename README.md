@@ -1,1 +1,1 @@
-# This is a game created by Parsia, Sean, and Alex.
+# This is a game called "Spear Knight" created by Parsia, Sean, and Alex.
