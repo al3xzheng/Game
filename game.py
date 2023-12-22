@@ -3,51 +3,56 @@ from sys import exit
 import math
 import textwrap
 import random
-
-#improvements, make the missiles go faster or make rounds spawn automatically ergo explain this in the rules
-#why does missile sometimes spawn out of the original box? I think just bad frames on computer, hopefully
+from pygame import mixer
 
 location = [0,0]
 # initial location of spear at the top left corner
 
 pygame.init()
-pygame.display.set_caption("Fun Shooter Game Ever") #This names our game
+pygame.display.set_caption("Spear Knight") #This names our game
 
 width = 800
 length = 600
 screen = pygame.display.set_mode((width,length))
+
+mixer.music.load("game_music.mp3")
+mixer.music.set_volume(0.3)
+
+background_image = pygame.image.load("Graphics/grassy.jpg")
+
 # This creates our window
 
 clock = pygame.time.Clock()
 
 main_font = pygame.font.Font("Pixeltype.ttf", 50)
+small_font = pygame.font.Font("Pixeltype.ttf", 25)
 
 round_counter = 0  # Initialize the round counter
 
-player_surface = pygame.transform.scale_by(pygame.image.load("player_pos1.png").convert_alpha(),2)
+player_surface = pygame.transform.scale_by(pygame.image.load("Graphics/player_pos1.png").convert_alpha(),2)
 player_rectangle = player_surface.get_rect(center = (400,300))
-player_running =[pygame.image.load("player_pos1.png"),
-				pygame.image.load("player_pos2.png"),
-				pygame.image.load("player_pos3.png"),
-				pygame.image.load("player_pos4.png"),
-				pygame.image.load("player_pos5.png"),
-				pygame.image.load("player_pos6.png"),
-				pygame.image.load("player_pos7.png")]
+player_running =[pygame.image.load("Graphics/player_pos1.png"),
+				pygame.image.load("Graphics/player_pos2.png"),
+				pygame.image.load("Graphics/player_pos3.png"),
+				pygame.image.load("Graphics/player_pos4.png"),
+				pygame.image.load("Graphics/player_pos5.png"),
+				pygame.image.load("Graphics/player_pos6.png"),
+				pygame.image.load("Graphics/player_pos7.png")]
 
 enemy_frame_size = (40, 40)  # Set the desired size for the enemy frames
 
-enemy_frames = [pygame.transform.scale(pygame.image.load("Slime1.png"), enemy_frame_size),
-                pygame.transform.scale(pygame.image.load("Slime2.png"), enemy_frame_size),
-                pygame.transform.scale(pygame.image.load("Slime3.png"), enemy_frame_size),
-                pygame.transform.scale(pygame.image.load("Slime4.png"), enemy_frame_size),
-                pygame.transform.scale(pygame.image.load("Slime5.png"), enemy_frame_size)]
+enemy_frames = [pygame.transform.scale(pygame.image.load("Graphics/Slime1.png"), enemy_frame_size),
+                pygame.transform.scale(pygame.image.load("Graphics/Slime2.png"), enemy_frame_size),
+                pygame.transform.scale(pygame.image.load("Graphics/Slime3.png"), enemy_frame_size),
+                pygame.transform.scale(pygame.image.load("Graphics/Slime4.png"), enemy_frame_size),
+                pygame.transform.scale(pygame.image.load("Graphics/Slime5.png"), enemy_frame_size)]
 
 projectle_frame_size = (20, 20)
 
-projectle_frames = [pygame.transform.scale(pygame.image.load("Projectle_1.png"), projectle_frame_size),
-                    pygame.transform.scale(pygame.image.load("Projectle_2.png"), projectle_frame_size),
-                    pygame.transform.scale(pygame.image.load("Projectle_3.png"), projectle_frame_size),
-                    pygame.transform.scale(pygame.image.load("Projectle_4.png"), projectle_frame_size)]
+projectle_frames = [pygame.transform.scale(pygame.image.load("Graphics/Projectle_1.png"), projectle_frame_size),
+                    pygame.transform.scale(pygame.image.load("Graphics/Projectle_2.png"), projectle_frame_size),
+                    pygame.transform.scale(pygame.image.load("Graphics/Projectle_3.png"), projectle_frame_size),
+                    pygame.transform.scale(pygame.image.load("Graphics/Projectle_4.png"), projectle_frame_size)]
 
 projectle_animation_frame = 0
 projectle_animation_speed = 0.1  # Adjust this to change the speed of the projectle animation
@@ -61,10 +66,10 @@ current_frame = 0
 animation_speed = 0.1  # Adjust this to change the speed of the animation
 last_update = pygame.time.get_ticks()
 
-spear = pygame.transform.scale_by(pygame.image.load("spear.png").convert_alpha(),1)
+spear = pygame.transform.scale_by(pygame.image.load("Graphics/spear.png").convert_alpha(),1)
 
 hearts = 3
-heart_surface = pygame.transform.scale_by(pygame.image.load("heart.png").convert_alpha(), 0.1)
+heart_surface = pygame.transform.scale_by(pygame.image.load("Graphics/heart.png").convert_alpha(), 5)
 
 def enemy_goon(enemy_x,enemy_y,collided = False):
     global enemy_animation_frame
@@ -98,7 +103,7 @@ def display_text(text, font, colour, x, y):
 # function to display text
 
 def rules():
-    full_rules = "Press Space to start each level"
+    full_rules = "Survive as many incoming enemy waves as possible! Controls: Use W, A, S, and D to move the player. Use Left-click to fire your spear."
     screen.fill("Light Pink")
     characters_in_line = 50
     # number of characters in each line
@@ -163,10 +168,6 @@ def level_list(number):
         count += 1
     return enemy_list
 
-#missile = pygame.transform.scale_by(pygame.image.load("spear.png").convert_alpha(),1)
-missile_surface = pygame.Surface((15,15)) #The size of the porjectile
-missile_surface.fill('Blue') #The colour of the projectile
-
 def enemy_fire(enemy_x,enemy_y, player_x, player_y):
     global projectle_animation_frame, last_projectle_animation_update
     now = pygame.time.get_ticks()
@@ -176,24 +177,22 @@ def enemy_fire(enemy_x,enemy_y, player_x, player_y):
     x_diff_missile = player_x - enemy_x
     y_diff_missile = player_y - enemy_y
     missile_norm = math.sqrt(x_diff_missile**2 + y_diff_missile**2)
-    if (x_diff_missile > 0 and y_diff_missile >0 or x_diff_missile > 0 and y_diff_missile < 0):
-        missile_angle = -math.degrees(math.atan2(y_diff_missile,x_diff_missile))
-        reference_angle = "down"
+    if (x_diff_missile > 0 and y_diff_missile >0):
+        missile_angle = -math.degrees(math.atan2(y_diff_missile,x_diff_missile)) - 90
+    elif (x_diff_missile > 0 and y_diff_missile < 0):
+        missile_angle = 90 - math.degrees(math.atan2(y_diff_missile,x_diff_missile))
     elif (x_diff_missile < 0 and y_diff_missile < 0):
-        missile_angle = -math.degrees(math.atan2(y_diff_missile,x_diff_missile)) +90
-        reference_angle = "up"
+        missile_angle = 90 - math.degrees(math.atan2(y_diff_missile,x_diff_missile))
     elif (x_diff_missile < 0 and y_diff_missile > 0):
-        missile_angle = -math.degrees(math.atan2(y_diff_missile,x_diff_missile)) -90
-        reference_angle = "up"
+        missile_angle = 90 - math.degrees(math.atan2(y_diff_missile,x_diff_missile))
+    #note negative angles from a negative x or y and a positive x or y
     rotated_missile = pygame.transform.rotate(projectle_frames[projectle_animation_frame], missile_angle)
-    return [rotated_missile,x_diff_missile/missile_norm, y_diff_missile/missile_norm, reference_angle]
+    return [rotated_missile,x_diff_missile/missile_norm, y_diff_missile/missile_norm]
 
 movement_speed = 5  # Default movement speed
 attack_speed = 1000  # Default attack speed in milliseconds
 last_attack_time = 0
 spear_speed = 10
-
-
 
 def offer_power_ups(round_counter):
     global hearts, movement_speed, spear_speed
@@ -204,7 +203,7 @@ def offer_power_ups(round_counter):
 
         line_number = 0
         while line_number < len(lines):
-            display_text(lines[line_number], main_font, "Black", width / 2, (length / 2 - 200) + (line_number * 50))
+            display_text(lines[line_number], main_font, "Black", width / 2, (length / 2) + (line_number * 50))
             line_number += 1
 
         selected = False
@@ -224,7 +223,6 @@ def offer_power_ups(round_counter):
                         spear_speed += 3
                         selected = True
             pygame.display.update()
-
 
 x_diff = 0
 y_diff = 0
@@ -255,17 +253,16 @@ level1 = False
 
 while True:
 
-
     if game_active == True:
+
         if level1 == False:
             round_counter += 1  # Increment round counter
             offer_power_ups(round_counter)  # Offer power-ups based on the round
             level1 = True
-       
-    
+
         now = pygame.time.get_ticks()
 
-        screen.fill("Light Grey")
+        screen.blit(background_image, (0, 0))
             
         keys = pygame.key.get_pressed()
         if keys[pygame.K_w]:
@@ -294,12 +291,10 @@ while True:
                 player_surface = pygame.transform.scale(player_running[current_frame], (40, 40))
             else:
                 # Reset to default image when not moving
-                player_surface = pygame.transform.scale(pygame.image.load("player_pos1.png"), (40, 40))
+                player_surface = pygame.transform.scale(pygame.image.load("Graphics/player_pos1.png"), (40, 40))
         if now - last_enemy_animation_update > enemy_animation_speed * 1000:
             last_enemy_animation_update = now
             enemy_animation_frame = (enemy_animation_frame + 1) % len(enemy_frames)
-
-        pygame.draw.rect(screen, (255, 0, 0), player_rectangle, 2)
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -309,8 +304,6 @@ while True:
                 if event.key == pygame.K_ESCAPE:
                     game_active = False
         if level1 == False:
-            if(hearts <= 0):
-                round_counter -=1
             round_counter += 1
             level1 = True
 
@@ -331,9 +324,9 @@ while True:
             
         if(hearts <= 0):
             screen.fill("Light Blue")
-            lose_text = "You Lost! " + str(round_counter-1) + " Waves Completed!"
-            lose_surf = main_font.render(f'{lose_text}',False,"Black")
-            lose_rect = lose_surf.get_rect(center = (width/2,length/2))
+            lose_text = "You Lost! " + str(round_counter-1) + " Rounds Completed."
+            lose_surf = main_font.render(f'{lose_text}', False, "Black")
+            lose_rect = lose_surf.get_rect(center = (width/2, length/2))
             screen.blit(lose_surf, lose_rect)
             isLost = True
 
@@ -392,8 +385,6 @@ while True:
         for i in range(hearts):
             screen.blit(heart_surface, (25 + (i*50),25))
 
-
-
         #this blits the position of the enemy
         if level1 == True and not isLost:
             enemies = 0
@@ -423,8 +414,8 @@ while True:
                     
                 
                 try:
-                    level_1_enemies[2*enemies] += 2 * tracker[2]
-                    level_1_enemies[2*enemies+1] += 2 * tracker[3]
+                    level_1_enemies[2*enemies] +=  (2 + 0.01 *round_counter) * tracker[2]
+                    level_1_enemies[2*enemies+1] +=  (2 + 0.01 *round_counter) * tracker[3]
                     #goons go toward the player by a speed of 2, on the next loop, this will be displayed
                 except:
                     1    
@@ -442,9 +433,8 @@ while True:
                 for enemy in range(0,len(locationOfEnemies),2):
                     missile_data = enemy_fire(locationOfEnemies[enemy],locationOfEnemies[enemy+1],currentPlayerLocation[0],currentPlayerLocation[1])
                     missile = missile_data[0]
-                    missile_direction_x = missile_data[1] *2
-                    missile_direction_y = missile_data[2] *2
-                    missile_ref_angle = missile_data[3]
+                    missile_direction_x = missile_data[1] *(2 + 0.13 * round_counter)
+                    missile_direction_y = missile_data[2] *(2 + 0.13 * round_counter)
                     missile_rect = missile.get_rect(center = (locationOfEnemies[enemy] + (missileTimer-missileSpawnRate)*1.3*missile_direction_x, locationOfEnemies[enemy+1]+ (missileTimer-missileSpawnRate)*1.3*missile_direction_y))
                     if(enemy in nullifiedMissiles): None
                     elif(0<missile_rect.x and missile_rect.x <800 and 0<missile_rect.y and missile_rect.y<600):
@@ -466,8 +456,11 @@ while True:
                 missileTimer = 0
                 numberEnemiesOnScreen = 0
             
-        display_text(f"Wave: {round_counter}", main_font, "Black", width - 100, 50)
-
+        
+        display_text(f"Wave: {round_counter}", main_font, "Black", width - 110, 70)
+        display_text("Health: " + str(hearts), small_font, "Black", width - 110, 100)
+        display_text("Speed: " + str(movement_speed), small_font, "Black", width - 110, 130)
+        display_text("Attack Speed: " + str(spear_speed), small_font, "Black", width - 110,  160)
 
         pygame.display.update() 
         #displays surface that we blit
@@ -493,6 +486,7 @@ while True:
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_SPACE:
                     game_active = True
+                    mixer.music.play(-1)
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_TAB:
                     rules()
